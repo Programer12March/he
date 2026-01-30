@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HannahOS v1.0 💖</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;600&family=Nunito:wght@400;700&family=Pacifico&display=swap" rel="stylesheet">
+    <style>
+        /* -----------------------------------------------------------
+           CORE SYSTEM STYLES & VARIABLES
+           ----------------------------------------------------------- */
+        :root {
+            --primary: #ff69b4;
+            --primary-dark: #d4147a;
+            --bg-gradient: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            --glass: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --text-main: #5a5a5a;
+            --app-icon-size: 80px;
+        }
+
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+        
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            font-family: 'Nunito', sans-serif;
+            overflow: hidden;
+            background: #ffdde1;  
+            background: -webkit-linear-gradient(to right, #ee9ca7, #ffdde1);  
+            background: linear-gradient(to right, #ee9ca7, #ffdde1); 
+        }
+
+        /* --- OS DESKTOP LAYOUT --- */
+        #desktop {
+            width: 100%; height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 50px;
+            z-index: 1;
+            transition: filter 0.3s;
+        }
+
+        /* Top Bar */
+        .status-bar {
+            position: absolute; top: 0; left: 0; width: 100%;
+            height: 30px;
+            background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(5px);
+            display: flex; justify-content: space-between;
+            padding: 0 15px; align-items: center;
+            font-size: 0.8rem; color: #fff; font-weight: bold;
+            z-index: 100;
+        }
+
+        /* App Grid */
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            padding: 20px;
+            max-width: 500px;
+        }
+
+        .app-icon {
+            width: var(--app-icon-size);
+            height: var(--app-icon-size);
+            background: white;
+            border-radius: 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+        .app-icon:active { transform: scale(0.9); }
+        .app-icon span { font-size: 2.5rem; margin-bottom: 5px; }
+        .app-icon label { font-size: 0.75rem; color: #555; font-weight: 700; }
+        
+        /* Notification Badge */
+        .badge {
+            position: absolute; top: -5px; right: -5px;
+            background: red; color: white;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            font-size: 0.7rem; display: flex;
+            justify-content: center; align-items: center;
+            animation: pulse 2s infinite;
+        }
+
+        /* --- WINDOW / MODAL SYSTEM --- */
+        .window {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fafafa;
+            z-index: 200; 
+            display: flex; flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .window.open { transform: translateY(0); }
+
+        .window-header {
+            height: 60px;
+            background: white;
+            display: flex; align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.5rem; color: var(--primary);
+        }
+        .close-btn {
+            margin-left: auto;
+            background: #eee;
+            width: 35px; height: 35px;
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; font-size: 1.2rem;
+        }
+
+        .window-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        /* --- GALLERY STYLES (MODIFIED FOR FULL VISIBILITY) --- */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* Changed to 1 column so images are large */
+            gap: 20px;
+            width: 100%;
+            max-width: 500px;
+            padding-bottom: 50px;
+        }
+
+        .photo-card {
+            background: white;
+            padding: 10px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .photo-card:hover {
+            transform: scale(1.02);
+            z-index: 10;
+        }
+
+        .photo-card img {
+            width: 100%;
+            height: auto; /* Changed from fixed height to auto for full visibility */
+            object-fit: contain; /* Ensures image is not cut off */
+            border-radius: 10px;
+            display: block;
+        }
+
+        /* --- APP SPECIFIC: TAMAGOTCHI (KITTEN) --- */
+        .pet-container {
+            width: 100%; max-width: 400px;
+            background: #fff0f5;
+            border-radius: 30px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+            border: 4px solid #fff;
+        }
+        .pet-display {
+            height: 200px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 6rem;
+            animation: bounce 3s infinite;
+            position: relative;
+        }
+        .pet-stats {
+            display: flex; justify-content: space-around;
+            margin: 20px 0;
+            font-weight: bold; color: #888;
+        }
+        .stat-bar-bg { width: 60px; height: 10px; background: #ddd; border-radius: 10px; overflow: hidden; }
+        .stat-bar-fill { height: 100%; background: var(--primary); width: 50%; transition: width 0.3s; }
+        
+        .pet-actions { display: flex; gap: 10px; justify-content: center; }
+        .action-btn {
+            background: white; border: 2px solid var(--primary);
+            color: var(--primary); padding: 10px 15px;
+            border-radius: 20px; font-weight: bold;
+            cursor: pointer; transition: 0.2s;
+        }
+        .action-btn:active { background: var(--primary); color: white; }
+
+        /* --- APP SPECIFIC: HEALER GAME --- */
+        #canvas-game {
+            background: #111;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            touch-action: none;
+        }
+        .game-ui { text-align: center; margin-bottom: 10px; }
+
+        /* --- APP SPECIFIC: PROPOSAL --- */
+        .proposal-card {
+            background: rgba(255,255,255,0.9);
+            padding: 40px; border-radius: 30px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(255, 105, 180, 0.4);
+            border: 2px solid gold;
+        }
+        .big-btn {
+            padding: 20px 50px; font-size: 1.5rem;
+            background: linear-gradient(45deg, #ff3366, #ff6b6b);
+            color: white; border: none; border-radius: 50px;
+            box-shadow: 0 10px 25px rgba(255, 51, 102, 0.5);
+            animation: pulse 1.5s infinite; cursor: pointer;
+        }
+        
+        /* --- ANIMATIONS --- */
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-20px); } 100% { transform: translateY(0px); } }
+
+        /* Background Particles */
+        #bg-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+        }
+        
+        .typewriter {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #333;
+            text-align: left;
+            background: #fffbe6;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            width: 100%;
+            min-height: 200px;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <div class="status-bar">
+        <span>HannahOS v1.0</span>
+        <span id="clock">12:00 PM</span>
+    </div>
+
+    <div id="desktop">
+        <h1 style="color: white; font-family: 'Pacifico'; text-shadow: 0 2px 10px rgba(0,0,0,0.2); margin-top: 40px; font-size: 2.5rem;">Hello, My Queen 👑</h1>
+        
+        <div class="app-grid">
+            <div class="app-icon" onclick="OS.openApp('tamagotchi')">
+                <span>🐱</span>
+                <label>My Kitten</label>
+            </div>
+            
+            <div class="app-icon" onclick="OS.openApp('healer')">
+                <span>💊</span>
+                <label>The Healer</label>
+            </div>
+
+            <div class="app-icon" onclick="OS.openApp('gallery')">
+                <span>📸</span>
+                <label>Memories</label>
+            </div>
+
+            <div class="app-icon" onclick="OS.openApp('messages')">
+                <div class="badge">1</div>
+                <span>💌</span>
+                <label>Feelings</label>
+            </div>
+
+            <div class="app-icon" onclick="OS.openApp('proposal')">
+                <span>💍</span>
+                <label>Future</label>
+            </div>
+        </div>
+    </div>
+
+    <div id="win-tamagotchi" class="window">
+        <div class="window-header">
+            <span>My Virtual Kitten</span>
+            <div class="close-btn" onclick="OS.closeApp('tamagotchi')">✕</div>
+        </div>
+        <div class="window-content">
+            <div class="pet-container">
+                <h3 id="pet-status-text">Your kitten is happy!</h3>
+                <div class="pet-display" id="pet-sprite">😻</div>
+                
+                <div class="pet-stats">
+                    <div>
+                        <small>Hunger</small>
+                        <div class="stat-bar-bg"><div class="stat-bar-fill" id="stat-hunger" style="width: 80%"></div></div>
+                    </div>
+                    <div>
+                        <small>Love</small>
+                        <div class="stat-bar-bg"><div class="stat-bar-fill" id="stat-love" style="width: 40%"></div></div>
+                    </div>
+                </div>
+
+                <div class="pet-actions">
+                    <button class="action-btn" onclick="Pet.feed()">🐟 Feed</button>
+                    <button class="action-btn" onclick="Pet.play()">🧶 Play</button>
+                    <button class="action-btn" onclick="Pet.pet()">✋ Pet</button>
+                </div>
+            </div>
+            <p style="margin-top: 20px; color: #888; font-size: 0.9rem;">Treat this kitten how I want to treat you: with food, love, and attention forever. 💖</p>
+        </div>
+    </div>
+
+    <div id="win-healer" class="window">
+        <div class="window-header">
+            <span>Heart Healer</span>
+            <div class="close-btn" onclick="OS.closeApp('healer')">✕</div>
+        </div>
+        <div class="window-content" style="background: #222; color: white;">
+            <div class="game-ui">
+                <p>Tap the screen to shoot "Love Beams" and destroy the "Bad Vibes" attacking the heart!</p>
+                <h2 id="game-score">Score: 0</h2>
+            </div>
+            <canvas id="canvas-game" width="350" height="400"></canvas>
+            <button class="action-btn" style="margin-top: 15px; background: #ff3366; color: white; border: none;" onclick="HealerGame.start()">Start Game</button>
+        </div>
+    </div>
+
+    <div id="win-messages" class="window">
+        <div class="window-header">
+            <span>My Heart's Log</span>
+            <div class="close-btn" onclick="OS.closeApp('messages')">✕</div>
+        </div>
+        <div class="window-content">
+            <div class="typewriter" id="typewriter-text"></div>
+            <button class="action-btn" style="margin-top: 20px;" onclick="Typewriter.start()">Read Letter Again</button>
+        </div>
+    </div>
+
+    <div id="win-proposal" class="window">
+        <div class="window-header">
+            <span>System Update</span>
+            <div class="close-btn" onclick="OS.closeApp('proposal')">✕</div>
+        </div>
+        <div class="window-content" style="justify-content: center;">
+            <div class="proposal-card">
+                <div style="font-size: 4rem; margin-bottom: 20px;">👰🏻‍♀️🤵🏻</div>
+                <h2 style="color: #444; margin-bottom: 10px;">Upgrade Relationship?</h2>
+                <p style="color: #666; margin-bottom: 30px;">
+                    Current Status: Girlfriend<br>
+                    New Status: <strong>Wife & Soulmate</strong><br><br>
+                    Patch Notes:<br>
+                    - Infinite Cuddles enabled<br>
+                    - Shared finances & dreams<br>
+                    - A lifetime of loyalty
+                </p>
+                <button class="big-btn" onclick="OS.triggerConfetti()">YES, I DO! 💍</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="win-gallery" class="window">
+        <div class="window-header">
+            <span>Our Memories</span>
+            <div class="close-btn" onclick="OS.closeApp('gallery')">✕</div>
+        </div>
+        <div class="window-content">
+            <h2 style="font-family: 'Pacifico', cursive; color: #ff69b4; margin-bottom: 20px; font-size: 1.8rem; text-align: center;">Aap Mere Ho Sirf Mere ❤️</h2>
+            
+            <div class="gallery-grid">
+                <div class="photo-card">
+                    <img src="https://i.pinimg.com/1200x/54/d8/31/54d831fd451b4c0b072eca603c4b25f8.jpg" alt="Love">
+                </div>
+                <div class="photo-card">
+                    <img src="https://i.pinimg.com/736x/2b/4c/08/2b4c082bddf0756ce105ac5370a1621c.jpg" alt="Love">
+                </div>
+                <div class="photo-card">
+                    <img src="https://i.pinimg.com/736x/b9/aa/af/b9aaaf6fd12bda82ef1bd55c58c362b7.jpg" alt="Love">
+                </div>
+                <div class="photo-card">
+                    <img src="https://i.pinimg.com/736x/6c/58/c8/6c58c8a3674953a449bf9b4088a544a4.jpg" alt="Love">
+                </div>
+                <div class="photo-card">
+                    <img src="https://i.pinimg.com/736x/2f/14/43/2f14439207eeb7d8546cc19ca0b156f3.jpg" alt="Love">
+                </div>
+                <div class="photo-card">
+                    <img src="https://i.pinimg.com/736x/ff/e9/5b/ffe95b0fa0a431d3a8f80be10b4a4ca3.jpg" alt="Love">
+                </div>
+            </div>
+
+            <p style="margin-top:20px; color:#888;">(ilysm)</p>
+        </div>
+    </div>
+
+    <script>
+        /* -----------------------------------------------------------
+           SYSTEM CLOCK & UTILS
+           ----------------------------------------------------------- */
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+            document.getElementById('clock').innerText = `${hours}:${minutes} ${ampm}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        /* -----------------------------------------------------------
+           OS MANAGER
+           ----------------------------------------------------------- */
+        const OS = {
+            openApp: (id) => {
+                document.getElementById(`win-${id}`).classList.add('open');
+                // Init specific logic
+                if(id === 'messages') Typewriter.start();
+            },
+            closeApp: (id) => {
+                document.getElementById(`win-${id}`).classList.remove('open');
+                if(id === 'healer') HealerGame.stop();
+            },
+            triggerConfetti: () => {
+                alert("YAY! Message Kabir immediately! 💍💖");
+                // Launch massive confetti logic
+                for(let i=0; i<100; i++) Particles.spawnConfetti();
+            }
+        };
+
+        /* -----------------------------------------------------------
+           APP: VIRTUAL PET (TAMAGOTCHI)
+           ----------------------------------------------------------- */
+        const Pet = {
+            hunger: 80,
+            love: 40,
+            sprites: ['😿', '😾', '🐱', '😻', '😽'], // Sad -> Happy
+            
+            init: function() {
+                setInterval(() => {
+                    this.hunger = Math.max(0, this.hunger - 1); // Hunger drops
+                    this.love = Math.max(0, this.love - 0.5);   // Love drops slowly
+                    this.updateUI();
+                }, 2000);
+            },
+
+            feed: function() {
+                this.hunger = Math.min(100, this.hunger + 15);
+                this.anim('😋');
+                this.updateUI();
+            },
+
+            play: function() {
+                this.love = Math.min(100, this.love + 10);
+                this.hunger = Math.max(0, this.hunger - 5);
+                this.anim('🧶');
+                this.updateUI();
+            },
+
+            pet: function() {
+                this.love = Math.min(100, this.love + 5);
+                this.anim('😽');
+                this.updateUI();
+            },
+
+            anim: function(emoji) {
+                const sprite = document.getElementById('pet-sprite');
+                const original = sprite.innerText;
+                sprite.innerText = emoji;
+                sprite.style.transform = "scale(1.2)";
+                setTimeout(() => {
+                    sprite.innerText = this.getMoodSprite();
+                    sprite.style.transform = "scale(1)";
+                }, 800);
+            },
+
+            getMoodSprite: function() {
+                if (this.hunger < 20) return this.sprites[0]; // Starving
+                if (this.love < 30) return this.sprites[1];   // Lonely
+                if (this.love > 80) return this.sprites[3];   // Loved
+                return this.sprites[2];                       // Neutral
+            },
+
+            updateUI: function() {
+                document.getElementById('stat-hunger').style.width = this.hunger + '%';
+                document.getElementById('stat-love').style.width = this.love + '%';
+                
+                // Color coding
+                document.getElementById('stat-hunger').style.backgroundColor = this.hunger < 30 ? 'red' : '#ff69b4';
+                
+                // Update Base Sprite if not animating
+                const current = document.getElementById('pet-sprite').innerText;
+                if(!['😋','🧶','😽'].includes(current)) {
+                    document.getElementById('pet-sprite').innerText = this.getMoodSprite();
+                }
+                
+                // Text update
+                const txt = document.getElementById('pet-status-text');
+                if(this.hunger < 20) txt.innerText = "I'm hungry! 🥺";
+                else if(this.love < 30) txt.innerText = "Pay attention to me!";
+                else if(this.love > 90) txt.innerText = "I love you so much! 💖";
+                else txt.innerText = "I'm just chilling.";
+            }
+        };
+        Pet.init();
+
+        /* -----------------------------------------------------------
+           APP: HEALER GAME (Canvas)
+           ----------------------------------------------------------- */
+        const HealerGame = {
+            canvas: document.getElementById('canvas-game'),
+            ctx: null,
+            running: false,
+            score: 0,
+            entities: [],
+            
+            start: function() {
+                this.ctx = this.canvas.getContext('2d');
+                this.running = true;
+                this.score = 0;
+                this.entities = [];
+                // Add the Heart center
+                this.entities.push({type: 'heart', x: 175, y: 350, r: 30});
+                
+                this.canvas.addEventListener('mousedown', (e) => this.shoot(e));
+                this.loop();
+                
+                // Spawner
+                this.spawner = setInterval(() => this.spawnEnemy(), 1000);
+            },
+
+            stop: function() {
+                this.running = false;
+                clearInterval(this.spawner);
+            },
+
+            spawnEnemy: function() {
+                // Spawn "Bad Vibes" at top
+                this.entities.push({
+                    type: 'enemy',
+                    x: Math.random() * 300 + 25,
+                    y: -20,
+                    r: 15,
+                    vy: Math.random() * 1 + 0.5,
+                    text: ['😡','😭','💔','⛈️'][Math.floor(Math.random()*4)]
+                });
+            },
+
+            shoot: function(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                this.entities.push({
+                    type: 'bullet', x: 175, y: 350, tx: x, ty: y,
+                    vx: (x - 175) / 20, vy: (y - 350) / 20,
+                    r: 5
+                });
+            },
+
+            loop: function() {
+                if(!this.running) return;
+                const ctx = this.ctx;
+                ctx.fillStyle = '#222';
+                ctx.fillRect(0,0,350,400);
+
+                // Update & Draw
+                this.entities.forEach((e, index) => {
+                    if(e.type === 'heart') {
+                        ctx.font = "40px Arial";
+                        ctx.fillText("❤️", e.x-20, e.y+15);
+                    }
+                    else if(e.type === 'enemy') {
+                        e.y += e.vy;
+                        ctx.font = "30px Arial";
+                        ctx.fillText(e.text, e.x-15, e.y+10);
+                        // Hit heart?
+                        if(e.y > 330) {
+                            this.entities.splice(index, 1);
+                            this.score -= 10;
+                        }
+                    }
+                    else if(e.type === 'bullet') {
+                        e.x += e.vx; e.y += e.vy;
+                        ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI*2);
+                        ctx.fillStyle = '#ff3366'; ctx.fill();
+                        
+                        // Collision
+                        this.entities.forEach((target, ti) => {
+                            if(target.type === 'enemy') {
+                                const dist = Math.hypot(e.x - target.x, e.y - target.y);
+                                if(dist < 30) {
+                                    this.entities.splice(ti, 1); // remove enemy
+                                    this.entities.splice(index, 1); // remove bullet
+                                    this.score += 50;
+                                }
+                            }
+                        });
+                    }
+                });
+
+                document.getElementById('game-score').innerText = "Score: " + this.score;
+                requestAnimationFrame(() => this.loop());
+            }
+        };
+
+        /* -----------------------------------------------------------
+           APP: TYPEWRITER (LETTER)
+           ----------------------------------------------------------- */
+        const Typewriter = {
+            text: "My Dearest Hannah,\n\nI don't just want to apologize, I want to tell you the truth. You are my healer. When I am with you, the noise of the world quiets down. You are my kitten, playful and sweet. \n\nBut most of all, in my heart, you are already my wife. I want to build a life where you never have to be sad again. \n\nI love you.\n- Kabir",
+            index: 0,
+            timer: null,
+            
+            start: function() {
+                this.index = 0;
+                document.getElementById('typewriter-text').innerText = "";
+                clearInterval(this.timer);
+                this.timer = setInterval(() => {
+                    document.getElementById('typewriter-text').innerText += this.text.charAt(this.index);
+                    this.index++;
+                    if(this.index >= this.text.length) clearInterval(this.timer);
+                }, 50);
+            }
+        };
+
+        /* -----------------------------------------------------------
+           BACKGROUND PARTICLES (Simple Physics)
+           ----------------------------------------------------------- */
+        const Particles = {
+            canvas: document.getElementById('bg-canvas'),
+            ctx: document.getElementById('bg-canvas').getContext('2d'),
+            items: [],
+            
+            init: function() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                this.loop();
+            },
+
+            spawnConfetti: function() {
+                 this.items.push({
+                    x: Math.random() * this.canvas.width,
+                    y: -10,
+                    vx: Math.random() * 4 - 2,
+                    vy: Math.random() * 5 + 2,
+                    color: `hsl(${Math.random()*360}, 100%, 50%)`,
+                    size: Math.random() * 10 + 5
+                });
+            },
+
+            loop: function() {
+                this.ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
+                
+                // Ambient Hearts
+                if(Math.random() < 0.05) {
+                    this.items.push({
+                        x: Math.random() * this.canvas.width,
+                        y: this.canvas.height + 20,
+                        vx: 0, vy: -1 * (Math.random() * 2 + 1),
+                        text: '❤️', size: 20
+                    });
+                }
+
+                for(let i=0; i<this.items.length; i++) {
+                    let p = this.items[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    
+                    if(p.text) {
+                        this.ctx.font = p.size + "px Arial";
+                        this.ctx.fillText(p.text, p.x, p.y);
+                    } else {
+                        this.ctx.fillStyle = p.color;
+                        this.ctx.fillRect(p.x, p.y, p.size, p.size);
+                    }
+
+                    if(p.y < -50 || p.y > this.canvas.height + 50) {
+                        this.items.splice(i, 1);
+                        i--;
+                    }
+                }
+                requestAnimationFrame(() => this.loop());
+            }
+        };
+        Particles.init();
+
+    </script>
+</body>
+</html>
